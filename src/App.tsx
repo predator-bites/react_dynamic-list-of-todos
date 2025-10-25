@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import 'bulma/css/bulma.css';
 import '@fortawesome/fontawesome-free/css/all.css';
 
@@ -7,8 +7,72 @@ import { TodoList } from './components/TodoList';
 import { TodoFilter } from './components/TodoFilter';
 import { TodoModal } from './components/TodoModal';
 import { Loader } from './components/Loader';
+import { Todo } from './types/Todo';
+import { getTodos } from './api';
+import { Filter } from './types/Filter';
 
 export const App: React.FC = () => {
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
+  const [sortType, setSortType] = useState<Filter>('all');
+  const [query, setQuery] = useState('');
+  const [loadStatus, setLoadStatus] = useState(false);
+
+  useEffect(() => {
+    if (loadStatus) {
+      setLoadStatus(false);
+    }
+
+    getTodos().then((rawTodos: Todo[]) => {
+      const tds: Todo[] = rawTodos.filter(todo => {
+        switch (sortType) {
+          case 'active': {
+            if (!todo.completed && todo.title.includes(query)) {
+              return true;
+            }
+
+            return false;
+          }
+
+          case 'completed': {
+            if (todo.completed && todo.title.includes(query)) {
+              return true;
+            }
+
+            return false;
+          }
+
+          case 'all':
+            if (todo.title.includes(query)) {
+              return true;
+            }
+
+            return false;
+        }
+      });
+
+      setTodos(tds);
+      setLoadStatus(true);
+    });
+  }, [sortType, query]);
+
+  const onSort = useCallback((event: React.FormEvent) => {
+    const newFilter: Filter = event.target.value as Filter;
+
+    if (sortType !== newFilter) {
+      setSortType(newFilter);
+    }
+  }, []);
+
+  const appliedQuery = useCallback(
+    (value: string) => setQuery(value.toLowerCase()),
+    [],
+  );
+
+  const onSelect = (todo: Todo | null) => {
+    setSelectedTodo(todo);
+  };
+
   return (
     <>
       <div className="section">
@@ -17,18 +81,30 @@ export const App: React.FC = () => {
             <h1 className="title">Todos:</h1>
 
             <div className="block">
-              <TodoFilter />
+              <TodoFilter onSort={onSort} onAppliedQuery={appliedQuery} />
             </div>
 
             <div className="block">
-              <Loader />
-              <TodoList />
+              {!loadStatus && <Loader />}
+              <TodoList
+                todos={todos}
+                onSelect={onSelect}
+                selected={selectedTodo}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <TodoModal />
+      {selectedTodo ? (
+        <TodoModal
+          todo={selectedTodo}
+          userId={selectedTodo.userId}
+          onModalWindowClose={() => onSelect(null)}
+        />
+      ) : (
+        ''
+      )}
     </>
   );
 };
