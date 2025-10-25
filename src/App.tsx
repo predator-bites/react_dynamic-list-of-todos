@@ -12,6 +12,7 @@ import { getTodos } from './api';
 import { Filter } from './types/Filter';
 
 export const App: React.FC = () => {
+  const [baseTodos, setBaseTodos] = useState<Todo[]>();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
   const [sortType, setSortType] = useState<Filter>('all');
@@ -22,37 +23,46 @@ export const App: React.FC = () => {
     setLoadStatus(false);
 
     getTodos().then((rawTodos: Todo[]) => {
-      const tds: Todo[] = rawTodos.filter(todo => {
-        switch (sortType) {
-          case 'active': {
-            if (!todo.completed && todo.title.includes(query)) {
-              return true;
-            }
-
-            return false;
-          }
-
-          case 'completed': {
-            if (todo.completed && todo.title.includes(query)) {
-              return true;
-            }
-
-            return false;
-          }
-
-          case 'all':
-            if (todo.title.includes(query)) {
-              return true;
-            }
-
-            return false;
-        }
-      });
-
-      setTodos(tds);
+      setBaseTodos(rawTodos);
+      setTodos(rawTodos);
       setLoadStatus(true);
     });
-  }, [sortType, query]);
+  }, []);
+
+  useEffect(() => {
+    if (!baseTodos) {
+      return;
+    }
+
+    const tds = baseTodos.filter(todo => {
+      switch (sortType) {
+        case 'active': {
+          if (!todo.completed && todo.title.includes(query)) {
+            return true;
+          }
+
+          return false;
+        }
+
+        case 'completed': {
+          if (todo.completed && todo.title.includes(query)) {
+            return true;
+          }
+
+          return false;
+        }
+
+        case 'all':
+          if (todo.title.includes(query)) {
+            return true;
+          }
+
+          return false;
+      }
+    });
+
+    setTodos(tds);
+  }, [sortType, query, baseTodos]);
 
   const onSort = useCallback(
     (event: React.FormEvent) => {
