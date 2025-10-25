@@ -12,21 +12,23 @@ export const TodoFilter: React.FC<Props> = ({
   const timer = useRef(0);
 
   const debounce = useCallback(
-    (callback: Function, delay: number): Function => {
-      return (...args: any) => {
+    (callback: (value: string) => void, delay: number): (() => void) => {
+      return (...args: any[]) => {
         if (timer.current !== 0) {
           window.clearTimeout(timer.current);
         }
 
-        timer.current = window.setTimeout(() => {
-          callback(...args);
-        }, delay);
+        if (typeof args[0] === 'string') {
+          timer.current = window.setTimeout(() => {
+            callback(args[0]);
+          }, delay);
+        }
       };
     },
     [],
   );
 
-  const applyQuery = debounce(onAppliedQuery, 500);
+  const applyQuery: typeof onAppliedQuery = debounce(onAppliedQuery, 500);
   const [query, setQuery] = useState('');
 
   const handlingInputChange = (value: string) => {
@@ -80,4 +82,4 @@ export const TodoFilter: React.FC<Props> = ({
       </p>
     </form>
   );
-}
+};

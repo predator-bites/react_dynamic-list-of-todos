@@ -19,9 +19,7 @@ export const App: React.FC = () => {
   const [loadStatus, setLoadStatus] = useState(false);
 
   useEffect(() => {
-    if (loadStatus) {
-      setLoadStatus(false);
-    }
+    setLoadStatus(false);
 
     getTodos().then((rawTodos: Todo[]) => {
       const tds: Todo[] = rawTodos.filter(todo => {
@@ -56,13 +54,16 @@ export const App: React.FC = () => {
     });
   }, [sortType, query]);
 
-  const onSort = useCallback((event: React.FormEvent) => {
-    const newFilter: Filter = event.target.value as Filter;
+  const onSort = useCallback(
+    (event: React.FormEvent) => {
+      const newFilter: Filter = event.target.value as Filter;
 
-    if (sortType !== newFilter) {
-      setSortType(newFilter);
-    }
-  }, []);
+      if (sortType !== newFilter) {
+        setSortType(newFilter);
+      }
+    },
+    [sortType],
+  );
 
   const appliedQuery = useCallback(
     (value: string) => setQuery(value.toLowerCase()),

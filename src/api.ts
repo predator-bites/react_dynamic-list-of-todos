@@ -1,4 +1,3 @@
-import { Filter } from './types/Filter';
 import { Todo } from './types/Todo';
 import { User } from './types/User';
 
